@@ -1,125 +1,112 @@
 <?php
     class Person{
-        function __construct(){
-            $this->fiscalCode = $fiscalCode; 
-            $this->firstname = $firstName;
-            $this->lastname = $lastName;
+        function __construct($firstName, $lastName){
+            $this->id = uniqid(); 
+            $this->firstName = $firstName;
+            $this->lastName = $lastName;
         }
-        function getFiscalCode(){
-            return $this->$fiscalCode;
-        }
-        function getFirstName(){
-            return $this->$firstName;
-        }
-        function getLastName(){
-            return $this->$lastName;
-        }
-        private $fiscalCode;
+        function getId(){return $this->id;}
+        function getFirstName(){return $this->firstName;}
+        function getLastName(){return $this->lastName;}
+        function setFirstName($firstName){$this->firstName = $firstName;}
+        function setLastName($lastName){$this->lastName = $lastName;}
+        private $id;
         private $firstName;
         private $lastName;
     }
 
     interface IStorePersons { //access person
-        function Get();
-        function Add($firstName, $lastName);
-        function Edit($fiscalCode, $firstName, $lastName);
-        function Remove($fiscalCode);
+        function get();
+        function add($firstName, $lastName);
+        function edit($id, $firstName, $lastName);
+        function remove($id);
     }
 
-    class PersonsInSession implements IStorePersons {
+    class PersonsInSession implements IStorePersons 
+    {
 
-        function __construct(){
+        function __construct()
+        {
             session_start();
-            if(!isset($_SESSION['person'])){
-                $_SESSION['person'] = array();
-            }
+            if(!isset($_SESSION['persons'])){$_SESSION['persons'] = array();}
         }
-
-        function get($fiscalCode){
-            return $_SESSION['person'];
+        function get()
+        {
+            return $_SESSION['persons'];
         }
-
-        function add($firstName, $lastName){
+        function add($firstName, $lastName)
+        {
             $person = new Person ($firstName, $lastName);
-            array_push($_SESSION['person'] .$person);
+            $_SESSION['persons'][$person->getId()] = $person;
         }
-
-        function edit($fiscalCode, $firstName, $lastName){
-            $index = array_search($fiscalCode, $_SESSION['person'])
-            if( !== false){
-                $person[$index] = $newName;
-            }
+        function edit($id, $firstName, $lastName)
+        {
+            $person = $_SESSION['persons'][$id];
+            $person->setFirstName($firstName);
+            $person->setLastName($lastName);
         }
-
-        function remove($fiscalCode){
-            if(($index = array_search($name, $_SESSION['person'])) !== false){
-                unset($_SESSION['person'][$index]);
-            }
-        }
-
+        function remove($id){unset($_SESSION['persons'][$id]);}
     }
 
-    class PersonsImMysql implements IStorePersons {
 
-    } 
-
-   
-    $personRepository = new PersonInSession();
-
-    if(isset ($_POST['action'])){
-
-        switch($_POST['action']){
+    $personRepository = new PersonsInSession();
+    
+    if(isset ($_POST['action']))
+    {
+        switch($_POST['action'])
+        {
             case 'create':
                 $personRepository->add($_POST['firstName'], $_POST['lastName']);
                 break;
             case 'update':
-                $personRepository->edit($_POST['fiscalCode'],$_POST['firstName'], $_POST['lastName']);
+                $personRepository->edit($_POST['id'], $_POST['firstName'], $_POST['lastName']);
                 break;
             case 'delete':
-                $personRepository->remove($_POST['fiscalCode']);
-                break;
-                
+                $personRepository->remove($_POST['id']);
+                break;  
         }
     }
-    
+        $persons = $personRepository->get();
 ?>
 <!DOCTYPE html>
 <html>
     <head>
         <title>Person</title>
         <link href="style.css" rel="stylesheet" type="text/css">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     </head>
     <body>  
             <h1>Person</h1>
             <table>
-                <th>
-                    <td>Fiscal Code</td>
-                    <td colspan="2"></td>
-                </th>
+              <?php foreach($persons as $person) { ?>
                 <tr>
                     <td>
                         <form method="post">
                             <input type="hidden" name="action" value="update">
-                            <input type="text" name="fiscalCode" value="<?php echo $; ?>">
-                            <input type="text" name="firstName" value="<?php echo $name; ?>">
-                            <input type="text" name="lastName" value="<?php echo $name; ?>">
+                            <input type="hidden" name="id" value="<?php echo $person->getId(); ?>">
+                            <label>First Name: </label>
+                            <input type="text" name="firstName" value="<?php echo $person->getFirstName(); ?>">
+                            <label>Last Name: </label>
+                            <input type="text" name="lastName" value="<?php echo $person->getLastName(); ?>">
                             <input type="submit" value="UPDATE">
                         </form>
                     </td>
                     <td>
                         <form method ="post">
                             <input type="hidden" name="action" value="delete">
-                            <input type="hidden" name="name" value="<?php echo $name; ?>">
+                            <input type="hidden" name="id" value="<?php echo $person->getId(); ?>">
                             <input type="submit" value="DELETE">
                         </form>
                     </td>               
                 </tr>
+               <?php } ?>
             </table>
             
             <form method="post">
                 <input type="hidden" name="action" value="create">
                 <label>Add person: </label>
-                <input type="text" name="name">
+                <input type="text" name="firstName">
+                <input type="text" name="lastName">
                 <input type="submit" value="CREATE">
             </form>
             <br>
