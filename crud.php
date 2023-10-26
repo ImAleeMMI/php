@@ -1,72 +1,127 @@
 <?php
-
-   session_start();
-
-    if(!isset($_SESSION['names'])){
-        $_SESSION['names'] = array();
+    class Person{
+        function __construct(){
+            $this->fiscalCode = $fiscalCode; 
+            $this->firstname = $firstName;
+            $this->lastname = $lastName;
+        }
+        function getFiscalCode(){
+            return $this->$fiscalCode;
+        }
+        function getFirstName(){
+            return $this->$firstName;
+        }
+        function getLastName(){
+            return $this->$lastName;
+        }
+        private $fiscalCode;
+        private $firstName;
+        private $lastName;
     }
- 
-    $names = $_SESSION['names'];
-    $names = array('Ale', 'Matteo', 'Alesso');//TODO 
+
+    interface IStorePersons { //access person
+        function Get();
+        function Add($firstName, $lastName);
+        function Edit($fiscalCode, $firstName, $lastName);
+        function Remove($fiscalCode);
+    }
+
+    class PersonsInSession implements IStorePersons {
+
+        function __construct(){
+            session_start();
+            if(!isset($_SESSION['person'])){
+                $_SESSION['person'] = array();
+            }
+        }
+
+        function get($fiscalCode){
+            return $_SESSION['person'];
+        }
+
+        function add($firstName, $lastName){
+            $person = new Person ($firstName, $lastName);
+            array_push($_SESSION['person'] .$person);
+        }
+
+        function edit($fiscalCode, $firstName, $lastName){
+            $index = array_search($fiscalCode, $_SESSION['person'])
+            if( !== false){
+                $person[$index] = $newName;
+            }
+        }
+
+        function remove($fiscalCode){
+            if(($index = array_search($name, $_SESSION['person'])) !== false){
+                unset($_SESSION['person'][$index]);
+            }
+        }
+
+    }
+
+    class PersonsImMysql implements IStorePersons {
+
+    } 
+
+   
+    $personRepository = new PersonInSession();
 
     if(isset ($_POST['action'])){
-        $name = $_POST['name'];
 
         switch($_POST['action']){
             case 'create':
-                $names[] = $name;
+                $personRepository->add($_POST['firstName'], $_POST['lastName']);
+                break;
+            case 'update':
+                $personRepository->edit($_POST['fiscalCode'],$_POST['firstName'], $_POST['lastName']);
+                break;
+            case 'delete':
+                $personRepository->remove($_POST['fiscalCode']);
                 break;
                 
         }
-        
-    
     }
     
 ?>
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Crud</title>
+        <title>Person</title>
         <link href="style.css" rel="stylesheet" type="text/css">
     </head>
     <body>  
-            <h1>Esercizio Crud</h1>
-
-
-            <label>Names :</label>
+            <h1>Person</h1>
             <table>
-                <?php           
-                    foreach($names as $name){     
-                ?>
+                <th>
+                    <td>Fiscal Code</td>
+                    <td colspan="2"></td>
+                </th>
                 <tr>
-                
-                <td>
-
-                    <form action="crud.php" method="post">
-                        <input type="text" name="name" value="<?php echo $name; ?>">
-                        <input type="submit"></input>     
-                    </form>
-                </td>
-                            </tr>
-                <?php
-                            
-                            }
-                        ?>
+                    <td>
+                        <form method="post">
+                            <input type="hidden" name="action" value="update">
+                            <input type="text" name="fiscalCode" value="<?php echo $; ?>">
+                            <input type="text" name="firstName" value="<?php echo $name; ?>">
+                            <input type="text" name="lastName" value="<?php echo $name; ?>">
+                            <input type="submit" value="UPDATE">
+                        </form>
+                    </td>
+                    <td>
+                        <form method ="post">
+                            <input type="hidden" name="action" value="delete">
+                            <input type="hidden" name="name" value="<?php echo $name; ?>">
+                            <input type="submit" value="DELETE">
+                        </form>
+                    </td>               
+                </tr>
             </table>
             
-            
-
-            <form action="crud.php" method="post">
-            <label>Nome :</label>
-            <input type="hidden" name="name" value="">
-            <input type="submit"></input>
+            <form method="post">
+                <input type="hidden" name="action" value="create">
+                <label>Add person: </label>
+                <input type="text" name="name">
+                <input type="submit" value="CREATE">
             </form>
-            <p>
-            <?php
-
-            ?>
-            </p>
-
             <br>
             <p><a href="index.html">Torna alla pagina principale</a></p>
     </body>
